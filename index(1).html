@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+
+<head>
+    <!-- 必须的 meta 标签 -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap 的 CSS 文件 -->
+    <link   rel="stylesheet" 
+            href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" 
+            integrity="sha384-p1KAotb3W9ndluCsqePPYnjRm3c6abdnIjo0tQwYUv83VsbsYd43RuofnFAaDo0E" 
+            crossorigin="anonymous">
+
+
+    <title>纯js完成canvas星空粒子效果-jq22.com</title>
+    <script src="https://libs.baidu.com/jquery/1.11.3/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-E5Sj1saJVFNzWWK3YIJB4LEDEEVEGaOdfmCprPDkfWUo+xkb6Ep52Q1TMEtgcFwi" 
+            crossorigin="anonymous"></script>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            text-decoration: none;
+        }
+
+        html {
+            background-image: -webkit-radial-gradient(ellipse farthest-corner at center top, #000d4d 0%, #000105 100%);
+            background-image: radial-gradient(ellipse farthest-corner at center top, #000d4d 0%, #000105 100%);
+        }
+
+        .box {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            display: flex;
+            width: 300px;
+            height: 100px;
+            background-color: red;
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            z-index: 99;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .box a:visited {
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="box">
+        <!-- a标签href中写上路径 -->
+        <a href="">韩梓庭的自我介绍</a>
+    </div>
+    <canvas id="mycanvas"></canvas>
+
+    <script>
+        var canvas = mycanvas;
+        /*获取屏幕宽高。用作适配*/
+        var w = window.innerWidth;
+        var h = window.innerHeight;
+        canvas.width = w;
+        canvas.height = h;
+        canvas.backgroundColor = "#000";
+        var ctx = canvas.getContext('2d');
+
+        function Build() {
+            this.ctx = ctx;
+            this.counts = 300; //最大粒子数
+            this.maxSize = 4; //初始化最大的大小
+            this.halfWidth = w / 2,
+                this.halfHeight = h / 2;
+            this.arr = []; //用于存储变量
+        }
+        Build.prototype.add = function (coor) {
+            var grd = this.ctx.createRadialGradient(coor.x, coor.y, coor.size / 2, coor.x, coor.y, coor.size);
+            grd.addColorStop(0, "white");
+            grd.addColorStop(1, coor.color);
+            this.ctx.fillStyle = grd;
+            this.ctx.beginPath();
+            this.ctx.arc(coor.x, coor.y, coor.size, 0, Math.PI * 2, true);
+            this.ctx.transform(1, 0, 0, 1, 0, coor.z);
+            this.ctx.closePath();
+            this.ctx.fill();
+        }
+        Build.prototype.init = function () {
+            this.run();
+            this.render();
+            this.animate();
+        }
+        Build.prototype.run = function () {
+            var nums = 0;
+            while (nums < this.counts) {
+                var coor = {
+                    x: Math.ceil(Math.random() * w),
+                    y: Math.ceil(Math.random() * h),
+                    posx: Math.random() * w - this.halfWidth,
+                    posy: Math.random() * h - this.halfHeight,
+                    fl: 100,
+                    speed: Math.random() * 2,
+                    posz: Math.random() * 250,
+                    r: Math.ceil(Math.random() * this.maxSize),
+                    color: "rgba(" + Math.ceil(Math.random() * 255) + "," + Math.ceil(Math.random() * 255) + "," + Math.ceil(Math.random() * 255) + "," + Math.random() + ")"
+                };
+                this.arr.push(coor);
+                nums++;
+            }
+        }
+        Build.prototype.clear = function () {
+            ctx.clearRect(0, 0, w, h);
+        }
+        Build.prototype.render = function () {
+            this.clear();
+            for (var item of this.arr) {
+                this.draw(item);
+            }
+        }
+        Build.prototype.animate = function () {
+            var _this = this;
+            this.render();
+            /*api自带方法*/
+            window.requestAnimationFrame(function () {
+                _this.animate();
+            });
+        },
+            Build.prototype.draw = function (item) {
+                if (item.posz > -item.fl) {
+                    /*连续修改scale，保持变化，用于控制量子大小，在屏幕上的位置*/
+                    var scale = item.fl / (item.fl + item.posz);
+                    /*修改对应数据*/
+                    item.x = this.halfWidth + item.posx * scale;
+                    item.y = this.halfHeight + item.posy * scale;
+                    item.size = item.r * scale;
+                    item.posz -= item.speed;
+                } else {
+                    /*初始化超出屏幕的量子。达成屏幕量子数量保持衡量的方法*/
+                    item.posz = Math.random() * 250;
+                }
+                this.add(item);
+            }
+        var app = new Build();
+        app.init();
+        window.addEventListener('resize', function () {
+            canvas.width = w = window.innerWidth;
+            canvas.height = h = window.innerHeight;
+        }, false);
+    </script>
+
+</body>
+
+</html>
